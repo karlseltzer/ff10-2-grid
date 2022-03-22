@@ -46,7 +46,7 @@ SCCs           = np.unique(FF10[1:,1])
 DAILY          = np.genfromtxt('./input/daily_allocation_profiles.csv',delimiter=",",skip_header=1)
 DAILY[:,1:]    = DAILY[:,1:] / (1/24)       # Normalize to 1
 MONTHLY        = np.genfromtxt('./input/monthly_allocation_profiles.csv',delimiter=",",skip_header=1)
-MONTHLY[:,1:]  = MONTHLY[:,1:] / (1/12)     # Normalize to 1
+MONTHLY[:,1:]  = MONTHLY[:,1:]
 ### Allocation information:
 ALLOCATION     = np.genfromtxt('./input/SCC_allocation.csv',delimiter=",",skip_header=1)
 ### GSPRO:
@@ -87,7 +87,7 @@ for i in range(len(FF10)):
     target_monthly = MONTHLY[MONTHLY[:,0]==data_temp[0,3]]
     target_spatial = data_temp[0,4]
     TOG2VOC        = GSCNV[GSCNV[:,0]==data_temp[0,1]]
-    TOG            = FF10[i,2] * TOG2VOC[0,1] * 907185 / np.sum(daysinmonth) / 24 / 3600 # tons per year --> grams per second
+    TOG            = FF10[i,2] * TOG2VOC[0,1] * 907185    # tons per year --> grams per year
 
     ################################################################################################    
     ### Generate state/county FIPS:
@@ -114,9 +114,9 @@ for i in range(len(FF10)):
     ################################################################################################    
     ### Get sub-county spatial allocation:
     if int(statefips) <= 30:                  # UNCOMMENT WHEN RUNNING CONUS
-        f1    = Dataset('/work/MOD3DEV/kseltzer/gridmasks/12US1_gridmasks/GRIDMASK_12US1_COUNTY_'+str(target_spatial)+'_GROUP1.nc', 'r')
+        f1    = Dataset('/work/MOD3DEV/kseltzer/gridmasks/12US1_gridmasks/GRIDMASK_12US1_COUNTY_'+str(int(target_spatial))+'_GROUP1.nc', 'r')
     else:
-        f1    = Dataset('/work/MOD3DEV/kseltzer/gridmasks/12US1_gridmasks/GRIDMASK_12US1_COUNTY_'+str(target_spatial)+'_GROUP2.nc', 'r')
+        f1    = Dataset('/work/MOD3DEV/kseltzer/gridmasks/12US1_gridmasks/GRIDMASK_12US1_COUNTY_'+str(int(target_spatial))+'_GROUP2.nc', 'r')
     #f1        = Dataset('./input/GRIDMASK_12US1_COUNTY_240_GROUP1_temp.nc', 'r')
     SPATIAL   = f1.variables['POP_FIPS_'+statefips+countyfips][0,0,:,:]
     f1.close()
@@ -144,7 +144,7 @@ for i in range(len(FF10)):
         for k in range(len(target_surro)):
             for l in range(len(SURROGATES)):
                 if target_surro[k] == SURROGATES[l]:
-                    final_array[j,l,:,0,:,:] += TOG * SPATIAL[:,:] * target_spec[k,1] * timezone_offset[:,:,:] * target_monthly[0,1+j] / target_spec[k,2]
+                    final_array[j,l,:,0,:,:] += TOG * SPATIAL[:,:] * target_spec[k,1] * timezone_offset[:,:,:] * target_monthly[0,1+j] / target_spec[k,2] / (daysinmonth[j] * 86400)
             else: pass
     ################################################################################################
 
