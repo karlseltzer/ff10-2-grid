@@ -48,7 +48,7 @@ DAILY[:,1:]    = DAILY[:,1:] / (1/24)       # Normalize to 1
 MONTHLY        = np.genfromtxt('./input/monthly_allocation_profiles.csv',delimiter=",",skip_header=1)
 MONTHLY[:,1:]  = MONTHLY[:,1:]
 ### Allocation information:
-ALLOCATION     = np.genfromtxt('./input/SCC_allocation.csv',delimiter=",",skip_header=1)
+ALLOCATION     = np.genfromtxt('./input/allocation_assignments.csv',delimiter=",",skip_header=1)
 ### GSPRO:
 GSPRO          = np.genfromtxt('./input/gspro.'+MECHANISM+'_criteria.20220322.csv',delimiter=",",usecols=(0,2,3),skip_header=1)
 MODELSPECS     = np.genfromtxt('./input/gspro.'+MECHANISM+'_criteria.20220322.csv',delimiter=",",dtype='str',usecols=(1),skip_header=1)
