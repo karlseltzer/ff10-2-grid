@@ -17,11 +17,12 @@ startTime = datetime.now()
 ### User Input
 ### Select modeling domain (only 12US1 currently available):
 DOMAIN     = '12US1'
-### Select photochemical modeling mechanism (CB6r3_ae8, CRACMMv0.21)
+### Select photochemical modeling mechanism (CB6r3_ae8, CRACMMv0.3)
 MECHANISM  = 'CB6r3_ae8'
 ### Name of ff10 file to grid:
-FF10       = 'AsphaltPaving_SmokeFlatFile_2018.csv'
-#FF10       = 'Temp_SmokeFlatFile_2018.csv'
+FF10       = 'AsphaltPaving_SmokeFlatFile_2018_CAFLNY.csv'
+#FF10       = 'temp_SmokeFlatFile_2018.csv'
+#FF10       = 'AsphaltPaving_SmokeFlatFile_2018.csv'
 ### Emissions year:
 YEAR       = '2018'
 ### Emissions source (used for output file name):
@@ -31,8 +32,7 @@ SOURCE     = 'AsphaltPaving'
 ####################################################################################################
 ### Import data
 ### Timezone offsets:
-f1             = Dataset('/work/MOD3DEV/kseltzer/gridmasks/timezones_'+DOMAIN+'.nc', 'r')  # UNCOMMENT WHEN RUNNING CONUS
-#f1             = Dataset('./input/timezones_'+DOMAIN+'.nc', 'r')
+f1             = Dataset('./input/timezones_'+DOMAIN+'.nc', 'r')
 TIMEZONES      = f1.variables['TZOFFSET'][0,0,:,:]      # Row, Col
 num_rows       = f1.NROWS
 num_cols       = f1.NCOLS
@@ -41,7 +41,7 @@ f1.close()
 FF10           = np.genfromtxt('./input/'+FF10,delimiter=",",usecols=(1,5,8))#,skip_header=2)  # FIPS, SCC, ann_value
 FF10           = FF10[1:,:]
 ### Generate arry of unique SCCs from FF10 file:
-SCCs           = np.unique(FF10[1:,1])
+SCCs           = np.unique(FF10[:,1])
 ### Temporal allocation files:
 DAILY          = np.genfromtxt('./input/daily_allocation_profiles.csv',delimiter=",",skip_header=1)
 DAILY[:,1:]    = DAILY[:,1:] / (1/24)       # Normalize to 1
@@ -71,6 +71,26 @@ MONTHS     = ['01','02','03','04','05','06','07','08','09','10','11','12']
 
 ### Add code here to check that all assigned information in ALLOCATION is available
 
+################################################################################################
+### Generate daily profile w/ timezone offsets
+bulk_timezone_offset  = np.zeros((len(SURROGATES),25,num_rows,num_cols))
+temp_offset           = np.zeros((24*2))
+
+for i in range(len(SCCs)):
+    target_daily     = ALLOCATION[ALLOCATION[:,0]==int(SCCs[i])]
+    target_daily     = DAILY[DAILY[:,0]==target_daily[0,2]]
+    temp_offset[:24] = target_daily[0,1:]
+    temp_offset[24:] = target_daily[0,1:]
+    
+    for j in range(num_rows):
+        for k in range(num_cols):
+            offset = TIMEZONES[j,k]
+            if np.isnan(offset): offset = 0
+            else:
+                bulk_timezone_offset[i,0:24,j,k] = temp_offset[24-offset:24+(24-offset)]
+                bulk_timezone_offset[i,-1,j,k]   = bulk_timezone_offset[i,0,j,k]
+################################################################################################
+
 ####################################################################################################
 #### Initiate final array:
 final_array = np.zeros((12,len(SURROGATES),25,1,num_rows,num_cols)) # surrogates, timesteps, layer, row, col
@@ -79,15 +99,29 @@ final_array = np.zeros((12,len(SURROGATES),25,1,num_rows,num_cols)) # surrogates
 ####################################################################################################
 ### Loop through FF10 file and grid:
 for i in range(len(FF10)):
-    
+
     data_temp      = ALLOCATION[ALLOCATION[:,0]==FF10[i,1]]
     target_spec    = GSPRO[GSPRO[:,0]==data_temp[0,1]]
     target_surro   = MODELSPECS[GSPRO[:,0]==data_temp[0,1]]
-    target_daily   = DAILY[DAILY[:,0]==data_temp[0,2]]
     target_monthly = MONTHLY[MONTHLY[:,0]==data_temp[0,3]]
+    target_monthly = target_monthly[0,1:]
     target_spatial = data_temp[0,4]
     TOG2VOC        = GSCNV[GSCNV[:,0]==data_temp[0,1]]
     TOG            = FF10[i,2] * TOG2VOC[0,1] * 907185    # tons per year --> grams per year
+    
+    ################################################################################################    
+    ### Pull desired timezone_offset from bulk_timezeone_offset:
+    for j in range(len(SCCs)):
+        if SCCs[j]==FF10[i,1]:
+            timezone_offset = bulk_timezone_offset[j,:,:,:]
+        else: pass
+    ################################################################################################
+
+    ################################################################################################    
+    ### Translate % monthly allocation to per second values:
+    for j in range(len(target_monthly)):
+        target_monthly[j] = target_monthly[j] / (daysinmonth[j] * 86400)
+    ################################################################################################
 
     ################################################################################################    
     ### Generate state/county FIPS:
@@ -121,34 +155,21 @@ for i in range(len(FF10)):
     SPATIAL   = f1.variables['POP_FIPS_'+statefips+countyfips][0,0,:,:]
     f1.close()
     ################################################################################################
-    
-    ################################################################################################
-    ### Generate daily profile w/ timezone offsets
-    timezone_offset  = np.zeros((25,num_rows,num_cols))
-    temp_offset      = np.zeros((24*2))
-    temp_offset[:24] = target_daily[0,1:]
-    temp_offset[24:] = target_daily[0,1:]
-    
-    for j in range(num_rows):
-        for k in range(num_cols):
-            offset = TIMEZONES[j,k]
-            if np.isnan(offset): offset = 0
-            else:
-                timezone_offset[0:24,j,k] = temp_offset[24-offset:24+(24-offset)]
-                timezone_offset[-1,j,k]   = timezone_offset[0,j,k]
-    ################################################################################################
 
     ################################################################################################
+    #### Initiate temp array:
+    temp_array = np.zeros((len(SURROGATES),25,1,num_rows,num_cols)) # surrogates, timesteps, layer, row, col
     ### Add emissions to final_array:
-    for j in range(len(final_array)):
-        for k in range(len(target_surro)):
-            for l in range(len(SURROGATES)):
-                if target_surro[k] == SURROGATES[l]:
-                    final_array[j,l,:,0,:,:] += TOG * SPATIAL[:,:] * target_spec[k,1] * timezone_offset[:,:,:] * target_monthly[0,1+j] / target_spec[k,2] / (daysinmonth[j] * 86400)
+    for j in range(len(target_surro)):
+        for k in range(len(SURROGATES)):
+            if target_surro[j] == SURROGATES[k]:
+                temp_array[k,:,0,:,:] += TOG * SPATIAL[:,:] * target_spec[j,1] * timezone_offset[:,:,:] / target_spec[j,2]
             else: pass
+    for j in range(len(target_monthly)):
+        final_array[j,:,:,:,:,:] += temp_array[:,:,:,:,:] * target_monthly[j]
     ################################################################################################
 
-for i in range(len(final_array)):
+for i in range(len(daysinmonth)):
 
     ################################################################################################
     ### Generate the TFLAG variables
