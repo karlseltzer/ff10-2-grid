@@ -20,8 +20,7 @@ DOMAIN     = '12US1'
 ### Select photochemical modeling mechanism (CB6r3_ae8, CRACMMv0.3)
 MECHANISM  = 'CB6r3_ae8'
 ### Name of ff10 file to grid:
-FF10       = 'AsphaltPaving_SmokeFlatFile_2018_CAFLNY.csv'
-#FF10       = 'temp_SmokeFlatFile_2018.csv'
+FF10       = 'temp_SmokeFlatFile_2018.csv'
 #FF10       = 'AsphaltPaving_SmokeFlatFile_2018.csv'
 ### Emissions year:
 YEAR       = '2018'
@@ -40,7 +39,7 @@ f1.close()
 ### FF10 emissions file:
 FF10           = np.genfromtxt('./input/'+FF10,delimiter=",",usecols=(1,5,8))#,skip_header=2)  # FIPS, SCC, ann_value
 FF10           = FF10[1:,:]
-### Generate arry of unique SCCs from FF10 file:
+### Generate array of unique SCCs from FF10 file:
 SCCs           = np.unique(FF10[:,1])
 ### Temporal allocation files:
 DAILY          = np.genfromtxt('./input/daily_allocation_profiles.csv',delimiter=",",skip_header=1)
