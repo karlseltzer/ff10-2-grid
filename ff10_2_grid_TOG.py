@@ -152,6 +152,7 @@ for i in range(len(FF10)):
     try:
         SPATIAL   = f1.variables['POP_FIPS_'+statefips+countyfips][0,0,:,:]
     except KeyError:
+        print('Spatial variable not found for: '+statefips+countyfips+'; SCC: ',int(FF10[i,1]))
         continue
     f1.close()
     ################################################################################################
