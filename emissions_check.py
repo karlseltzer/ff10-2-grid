@@ -10,8 +10,7 @@ DOMAIN     = '12US1'
 ### Select photochemical modeling mechanism (CB6r3_ae8, CRACMMv0.3)
 MECHANISM  = 'CB6r3_ae8'
 ### Name of ff10 file to grid:
-FF10       = 'temp_SmokeFlatFile_2018.csv'
-#FF10       = 'AsphaltPaving_SmokeFlatFile_2018.csv'
+FF10       = 'AsphaltPaving_SmokeFlatFile_2018.csv'
 ### Emissions year:
 YEAR       = '2018'
 ### Emissions source (used for output file name):

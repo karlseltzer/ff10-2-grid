@@ -20,12 +20,11 @@ DOMAIN     = '12US1'
 ### Select photochemical modeling mechanism (CB6r3_ae8, CRACMMv0.3)
 MECHANISM  = 'CB6r3_ae8'
 ### Name of ff10 file to grid:
-FF10       = 'temp_SmokeFlatFile_2018.csv'
-#FF10       = 'AsphaltPaving_SmokeFlatFile_2018.csv'
+FF10       = 'Asphalt_SmokeFlatFile_2018.csv'
 ### Emissions year:
 YEAR       = '2018'
 ### Emissions source (used for output file name):
-SOURCE     = 'AsphaltPaving'
+SOURCE     = 'Asphalt'
 ####################################################################################################
 
 ####################################################################################################
@@ -150,8 +149,10 @@ for i in range(len(FF10)):
         f1    = Dataset('/work/MOD3DEV/kseltzer/gridmasks/12US1_gridmasks/GRIDMASK_12US1_COUNTY_'+str(int(target_spatial))+'_GROUP1.nc', 'r')
     else:
         f1    = Dataset('/work/MOD3DEV/kseltzer/gridmasks/12US1_gridmasks/GRIDMASK_12US1_COUNTY_'+str(int(target_spatial))+'_GROUP2.nc', 'r')
-    #f1        = Dataset('./input/GRIDMASK_12US1_COUNTY_240_GROUP1_temp.nc', 'r')
-    SPATIAL   = f1.variables['POP_FIPS_'+statefips+countyfips][0,0,:,:]
+    try:
+        SPATIAL   = f1.variables['POP_FIPS_'+statefips+countyfips][0,0,:,:]
+    except KeyError:
+        continue
     f1.close()
     ################################################################################################
 
