@@ -17,14 +17,14 @@ startTime = datetime.now()
 ### User Input
 ### Select modeling domain (only 12US1 currently available):
 DOMAIN     = '12US1'
-### Select photochemical modeling mechanism (CB6r3_ae8, CRACMMv0.3)
-MECHANISM  = 'CB6r3_ae8'
+### Select photochemical modeling mechanism (CB6R3_AE8, CRACMMv0.3)
+MECHANISM  = 'CB6R3_AE8'
 ### Name of ff10 file to grid:
-FF10       = 'Asphalt_SmokeFlatFile_2018.csv'
+FF10       = 'VCPy_Pesticides_SmokeFlatFile_EQUATESv2_wPSS_2018.csv'
 ### Emissions year:
 YEAR       = '2018'
 ### Emissions source (used for output file name):
-SOURCE     = 'Asphalt'
+SOURCE     = 'VCPy_Pesticides'
 ####################################################################################################
 
 ####################################################################################################
@@ -47,13 +47,20 @@ MONTHLY        = np.genfromtxt('./input/monthly_allocation_profiles.csv',delimit
 MONTHLY[:,1:]  = MONTHLY[:,1:]
 ### Allocation information:
 ALLOCATION     = np.genfromtxt('./input/allocation_assignments.csv',delimiter=",",skip_header=1)
+#### GSPRO:
+#GSPRO          = np.genfromtxt('./input/gspro.'+MECHANISM+'_criteria.20220322.csv',delimiter=",",usecols=(0,2,3),skip_header=1)
+#MODELSPECS     = np.genfromtxt('./input/gspro.'+MECHANISM+'_criteria.20220322.csv',delimiter=",",dtype='str',usecols=(1),skip_header=1)
+#### Generate arry of unique mechanism surrogates from GSPRO:
+#SURROGATES     = np.unique(MODELSPECS[:])
+#### GSCNV:
+#GSCNV          = np.genfromtxt('./input/gscnv.'+MECHANISM+'_criteria.20220322.csv',usecols=(2,3),delimiter=",",skip_header=1)
 ### GSPRO:
-GSPRO          = np.genfromtxt('./input/gspro.'+MECHANISM+'_criteria.20220322.csv',delimiter=",",usecols=(0,2,3),skip_header=1)
-MODELSPECS     = np.genfromtxt('./input/gspro.'+MECHANISM+'_criteria.20220322.csv',delimiter=",",dtype='str',usecols=(1),skip_header=1)
+GSPRO          = np.genfromtxt('./input/gspro.'+MECHANISM+'_CRITERIA_VOC.CMAQ.2022-10-26.txt',usecols=(0,3,4))
+MODELSPECS     = np.genfromtxt('./input/gspro.'+MECHANISM+'_CRITERIA_VOC.CMAQ.2022-10-26.txt',dtype='str',usecols=(2))
 ### Generate arry of unique mechanism surrogates from GSPRO:
 SURROGATES     = np.unique(MODELSPECS[:])
 ### GSCNV:
-GSCNV          = np.genfromtxt('./input/gscnv.'+MECHANISM+'_criteria.20220322.csv',usecols=(2,3),delimiter=",",skip_header=1)
+GSCNV          = np.genfromtxt('./input/gscnv.'+MECHANISM+'_CRITERIA_VOC.CMAQ.2022-10-26.txt',usecols=(2,3))
 ####################################################################################################
 
 ####################################################################################################
